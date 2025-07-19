@@ -32,9 +32,8 @@ func (ps *PlayerSession) Receive(c *actor.Context) {
 		go ps.readLoop(c)
 
 	case *actor.PID:
-		// msg è il PID del matchmaking
 		ps.matchmaking = msg
-		// Registrati al matchmaking
+		// Registro al matchmaking
 		c.Send(ps.matchmaking, ps.sessionPID)
 		log.Println("Registrato al matchmaking:", ps.sessionPID.String())
 	case *PlayerAction:
@@ -67,9 +66,9 @@ func (ps *PlayerSession) readLoop(c *actor.Context) {
 
 		switch m.Action {
 		case "login":
-			// Già registrato al matchmaking in Started
+			
 		case "move", "shoot":
-			// qui potresti inviare messaggi a un Match actor
+			
 			if ps.matchPID != nil {
 				c.Send(ps.matchPID, &PlayerAction{
 					From:   ps.sessionPID,
@@ -145,7 +144,7 @@ func (m *Matchmaking) Receive(c *actor.Context) {
 
 func (m *Matchmaking) MatchLoop(c *actor.Context) {
 	for {
-		time.Sleep(1 * time.Second) // intervallo di controllo matchmaking
+		time.Sleep(1 * time.Second) 
 		var p1, p2 *PlayerStatus
 
 		// Trova due giocatori liberi
@@ -203,9 +202,8 @@ func (s *Server) startHTTP(c *actor.Context) {
 				log.Println("WS Upgrade:", err)
 				return
 			}
-			// Spawn PlayerSession e invia PID matchmaking
+			// Spawn PlayerSession 
 			sessionPID := c.SpawnChild(NewSession(conn), "session")
-			// Comunica al session actor anche il PID del matchmaking
 			c.Send(sessionPID, s.matchmakingPID)
 		})
 		log.Println("Server WS in ascolto su :4000/ws")
