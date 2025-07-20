@@ -23,9 +23,9 @@ func (s *Server) Receive(c *actor.Context) {
 	switch msg := c.Message().(type) {
 	case actor.Started:
 
-		s.startHTTP(c)
+		s.startHTTP(c) //SERVER START
 
-		s.matchmakingPID = c.SpawnChild(NewMatchmaking(), "matchmaking")
+		s.matchmakingPID = c.SpawnChild(NewMatchmaking(), "matchmaking") //SPAWN MATCHMAKING
 
 	case *actor.PID:
 		c.Send(s.matchmakingPID, msg)
@@ -40,7 +40,7 @@ func (s *Server) startHTTP(c *actor.Context) {
 				log.Println("WS Upgrade:", err)
 				return
 			}
-			// Spawn PlayerSession e invia PID matchmaking
+			// Spawn PlayerSession
 			sessionPID := c.SpawnChild(NewSession(conn), "session")
 			// Comunica al session actor anche il PID del matchmaking
 			c.Send(sessionPID, s.matchmakingPID)

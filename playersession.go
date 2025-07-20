@@ -65,7 +65,7 @@ func (ps *PlayerSession) readLoop(c *actor.Context) {
 
 		switch m.Action {
 		case "login":
-			// Già registrato al matchmaking in Started
+			// Già registrato al matchmaking in actorStarted
 		case "move", "shoot":
 			// qui potresti inviare messaggi a un Match actor
 			if ps.matchPID != nil {

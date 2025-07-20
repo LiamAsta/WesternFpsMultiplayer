@@ -1,0 +1,39 @@
+engine spawna server 
+
+server compie due azioni quando spawna : start http (websocket)  e spawna un matchmaking
+
+start http ---> spawna sessione giocatore e invia alla sessione il pid del matchmaking (PidMatchamking ottenuto in fase di spawn del matchmaking)
+
+sessione giocatore quando spawna avvia il readLoop (legge i messaggi che arrivano dalla connessione websocket e li inoltra al match actor (tipo move))
+
+
+
+
+
+
+-----------------------------------
+matchmaking --> quando spawna dal server avvia il matchLoop
+matchLoop ---> cerca nella map due giocatori che siano pronti per giocare, se li trova SPAWNA MATCH
+
+il matchamkin da starthttp riceve il pid della player session per salvarli nella map
+
+
+AZIONI REVERSE/MESSAGGI TRA ATTORI
+quando il match spawna, manda ai pid (PlayerSession) dei rispettivi giocatori "matchjoined var" che indica che i giocatori sono nel match 
+
+il PlayerSession quando riceve matchjoined,e conferma i giocatori sono in partita e assegna il pid del processo a MATCHPID(cosi ricavo pid del match utile in readloop)
+
+ANALISI DELL DUE GOROUTINES
+
+readLoop (PlayerSession) --> manda al pid del match (ottenuto dopo che due player hanno  matchjoined) delle player actions
+
+quando il match riceve player actions , controlla se il from del player action coincide con il pid o di p1 o di p2
+
+trova chi manda i dati e manda all'altro pid l'intero json, che gira il messaggio al websocket 
+
+
+
+matchLoop (mathcmaking) ---> 
+
+
+
