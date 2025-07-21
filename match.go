@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"math/rand/v2"
 	"time"
 
 	"github.com/anthdm/hollywood/actor"
@@ -338,6 +339,8 @@ func (m *Match) handleAdvancedShoot(c *actor.Context, shooter *actor.PID, data m
 	shootOrigin := Position{X: originX, Y: originY, Z: originZ}
 	shootDirection := Position{X: dirX, Y: dirY, Z: dirZ}
 
+	_ = shootOrigin
+	_ = shootDirection
 	// Determine target
 	var target *actor.PID
 	if shooter == m.p1 {
@@ -356,9 +359,9 @@ func (m *Match) handleAdvancedShoot(c *actor.Context, shooter *actor.PID, data m
 	hitChance := calculateHitChance(weapon, distance)
 
 	// Simulate hit
-	if Math.Random() <= hitChance {
+	if rand.Float64() <= hitChance {
 		// Calculate damage
-		isHeadshot := Math.Random() < 0.15 // 15% headshot chance
+		isHeadshot := rand.Float64() < 0.15 // 15% headshot chance
 		damage := CalculateDamage(weapon, distance, isHeadshot)
 
 		// Apply damage
@@ -473,6 +476,12 @@ func (m *Match) handleExplosionDamage(c *actor.Context, exploder *actor.PID, dat
 	}
 
 	m.checkRoundEndConditions(c)
+}
+
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
 }
 
 func (m *Match) handleMove(c *actor.Context, mover *actor.PID, data map[string]interface{}) {

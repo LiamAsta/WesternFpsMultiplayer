@@ -25,24 +25,19 @@ func (ps *PlayerSession) Receive(c *actor.Context) {
 	switch msg := c.Message().(type) {
 	case actor.Started:
 		ps.sessionPID = c.PID()
-		// Avvia la lettura dei messaggi WS
 		go ps.readLoop(c)
 
 	case *actor.PID:
-		// msg è il PID del matchmaking
+		// Ricevi il PID del matchmaking e registrati
 		ps.matchmaking = msg
-		// Registrati al matchmaking
 		c.Send(ps.matchmaking, ps.sessionPID)
 		log.Println("Registrato al matchmaking:", ps.sessionPID.String())
+
 	case *PlayerAction:
-		// Gira il messaggio WebSocket al client Unity
+		// Messaggio da inoltrare al client Unity
 		ps.conn.WriteMessage(websocket.TextMessage, []byte(msg.Data))
-	case *MatchJoined:
-		ps.matchPID = msg.PID
-		log.Println("Assegnato al match:", ps.matchPID.String())
 
 	}
-
 }
 
 func (ps *PlayerSession) readLoop(c *actor.Context) {
@@ -50,7 +45,7 @@ func (ps *PlayerSession) readLoop(c *actor.Context) {
 		_, data, err := ps.conn.ReadMessage()
 		if err != nil {
 			log.Println("WS read error:", err)
-			c.Engine().Poison(ps.sessionPID) // termina l’attore
+			c.Engine().Poison(ps.sessionPID)
 			return
 		}
 
@@ -59,36 +54,29 @@ func (ps *PlayerSession) readLoop(c *actor.Context) {
 		}
 		if err := json.Unmarshal(data, &m); err != nil {
 			log.Println("JSON Unmarshal error:", err, "Data:", string(data))
-			continue
+			// In caso di JSON errato, chiudi la connessione per evitare problemi di protocollo
+			c.Engine().Poison(ps.sessionPID)
+			return
 		}
 
 		log.Printf("Ricevuto action: %s dal player: %s", m.Action, ps.sessionPID.String())
 
-		switch m.Action {
-		case "login":
-			log.Println("Login ricevuto")
-		case "shoot":
-			if ps.matchPID != nil {
-				log.Printf("Inoltro action: %s al match %s", m.Action, ps.matchPID.String())
-				c.Send(ps.matchPID, &PlayerAction{
-					From:   ps.sessionPID,
-					Action: m.Action,
-					Data:   string(data),
-				})
-			}
-		case "move":
-			if ps.matchPID != nil {
-				c.Send(ps.matchPID, &PlayerAction{
-					From:   ps.sessionPID,
-					Action: m.Action,
-					Data:   string(data),
-				})
-			}
-
-		default:
-			log.Printf("Azione non gestita: %s", m.Action)
+		if ps.matchPID == nil {
+			log.Println("Nessun match assegnato, ignoro action:", m.Action)
+			continue
 		}
 
+		// Supporta tutte le azioni di gameplay
+		switch m.Action {
+		case "login", "shoot", "move", "buy_weapon", "plant_bomb", "defuse_bomb", "explosion_damage":
+			c.Send(ps.matchPID, &PlayerAction{
+				From:   ps.sessionPID,
+				Action: m.Action,
+				Data:   string(data),
+			})
+		default:
+			log.Printf("Azione non gestita dal server: %s", m.Action)
+		}
 	}
 }
 
@@ -98,7 +86,7 @@ type PlayerAction struct {
 	Data   string
 }
 
-// Stato giocatore
+// Stato giocatore per matchmaking
 type PlayerStatus struct {
 	PID  *actor.PID
 	Free bool
