@@ -57,25 +57,38 @@ func (ps *PlayerSession) readLoop(c *actor.Context) {
 		var m struct {
 			Action string `json:"action"`
 		}
-
 		if err := json.Unmarshal(data, &m); err != nil {
-			log.Println("JSON Unmarshal:", err)
+			log.Println("JSON Unmarshal error:", err, "Data:", string(data))
 			continue
 		}
 
+		log.Printf("Ricevuto action: %s dal player: %s", m.Action, ps.sessionPID.String())
+
 		switch m.Action {
 		case "login":
-			// Già registrato al matchmaking in actorStarted
-		case "move", "shoot":
-			// qui potresti inviare messaggi a un Match actor
+			log.Println("Login ricevuto")
+		case "shoot":
+			if ps.matchPID != nil {
+				log.Printf("Inoltro action: %s al match %s", m.Action, ps.matchPID.String())
+				c.Send(ps.matchPID, &PlayerAction{
+					From:   ps.sessionPID,
+					Action: m.Action,
+					Data:   string(data),
+				})
+			}
+		case "move":
 			if ps.matchPID != nil {
 				c.Send(ps.matchPID, &PlayerAction{
 					From:   ps.sessionPID,
 					Action: m.Action,
-					Data:   string(data), // inoltra l’intero JSON ricevuto
+					Data:   string(data),
 				})
 			}
+
+		default:
+			log.Printf("Azione non gestita: %s", m.Action)
 		}
+
 	}
 }
 
